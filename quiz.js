@@ -9,51 +9,51 @@ let timeLeft = 0;
 let quizDetails = {}; // Store details for use in localStorage
 let currentDifficulty = "medium"; // Default difficulty level
 async function generateQuestions(topic, num) {
-  // 🔁 Adaptive difficulty based on last score
-const lastScore = parseFloat(localStorage.getItem("lastScorePercentage"));
+  // Adaptive difficulty based on last stored score
+  const lastScore = parseFloat(localStorage.getItem("lastScorePercentage"));
+  let currentDifficulty;
 
-if (!isNaN(lastScore)) {
-  if (lastScore < 40) {
-    currentDifficulty = "easy";
-  } else if (lastScore > 75) {
-    currentDifficulty = "hard";
+  if (!isNaN(lastScore)) {
+    if (lastScore < 40) {
+      currentDifficulty = "easy";
+    } else if (lastScore > 75) {
+      currentDifficulty = "hard";
+    } else {
+      currentDifficulty = "medium";
+    }
   } else {
-    currentDifficulty = "medium";
+    currentDifficulty = "medium"; // default if no previous score
   }
-} else {
-  currentDifficulty = "medium"; // default for first time
-}
-
-  const apiKey = "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"; // Replace with your actual API key
-  const model = "llama-3.3-70b-versatile"; // Replace with your model name if different
-
-  const prompt = `Generate ${num} multiple-choice questions with 4 options each on the topic "${topic}".
-Each question should be of ${currentDifficulty} difficulty level.
-Provide the correct answer index (0-3) for each question in JSON format like this:
-[
-  {
-    "question": "Question text",
-    "options": ["Option A", "Option B", "Option C", "Option D"],
-    "correctAnswer": 1
-  }
-]`;
-
 
   try {
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
+    const response = await fetch('/api/generate-questions', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: model,
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.7,
-        max_tokens: 1000,
-        n: 1,
-      }),
+        topic,
+        num,
+        difficulty: currentDifficulty
+      })
     });
+
+    if (!response.ok) {
+      throw new Error(`Server error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    // Adjust if your backend sends questions inside an object
+    const questions = data.questions || data;
+
+    return questions;
+
+  } catch (error) {
+    console.error('Error fetching questions:', error);
+    return null;
+  }
+}
 
     const data = await response.json();
     const aiResponse = data.choices[0].message.content;
