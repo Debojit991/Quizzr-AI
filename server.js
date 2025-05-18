@@ -1,4 +1,3 @@
-// server.js (backend)
 require('dotenv').config();
 const express = require('express');
 const fetch = require('node-fetch');
@@ -6,7 +5,7 @@ const app = express();
 
 app.use(express.json());
 
-const GROQ_APIKEY = process.env.GROQ_APIKEY; // Your secret stored here
+const GROQ_APIKEY = process.env.GROQ_APIKEY;
 
 app.post('/api/generate-questions', async (req, res) => {
   const { topic, num, difficulty } = req.body;
@@ -30,16 +29,15 @@ Provide the correct answer index (0-3) for each question in JSON format like thi
         "Authorization": `Bearer ${GROQ_APIKEY}`
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: "llama-3-70b-8192",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.7,
         max_tokens: 1000,
-        n: 1,
       }),
     });
 
     const data = await response.json();
-    res.json(data); // send raw response to frontend
+    res.json(data);
   } catch (error) {
     res.status(500).json({ error: 'Failed to generate questions' });
   }
