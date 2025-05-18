@@ -9,71 +9,43 @@ let timeLeft = 0;
 let quizDetails = {}; // Store details for use in localStorage
 let currentDifficulty = "medium"; // Default difficulty level
 async function generateQuestions(topic, num) {
-  // Adaptive difficulty based on last stored score
   const lastScore = parseFloat(localStorage.getItem("lastScorePercentage"));
-  let currentDifficulty;
+  let currentDifficulty = "medium";
 
   if (!isNaN(lastScore)) {
-    if (lastScore < 40) {
-      currentDifficulty = "easy";
-    } else if (lastScore > 75) {
-      currentDifficulty = "hard";
-    } else {
-      currentDifficulty = "medium";
-    }
-  } else {
-    currentDifficulty = "medium"; // default if no previous score
+    if (lastScore < 40) currentDifficulty = "easy";
+    else if (lastScore > 75) currentDifficulty = "hard";
+  }
+
+  // Helper for timeout fetch (5 seconds)
+  function fetchWithTimeout(url, options, timeout = 5000) {
+    return Promise.race([
+      fetch(url, options),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), timeout))
+    ]);
   }
 
   try {
-    const response = await fetch('/api/generate-questions', {
+    const response = await fetchWithTimeout('/api/generate-questions', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        topic,
-        num,
-        difficulty: currentDifficulty
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ topic, num, difficulty: currentDifficulty }),
     });
 
-    if (!response.ok) {
-      throw new Error(`Server error: ${response.status} ${response.statusText}`);
-    }
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
     const data = await response.json();
 
-    // Adjust if your backend sends questions inside an object
+    // Assuming backend returns questions array directly or under data.questions
     const questions = data.questions || data;
 
     return questions;
-
   } catch (error) {
-    console.error('Error fetching questions:', error);
-    return null;
+    console.error('Error generating questions:', error);
+    return null; // Return null on error so UI can handle it gracefully
   }
 }
 
-    const data = await response.json();
-    const aiResponse = data.choices[0].message.content;
-
-    try {
-      const startIndex = aiResponse.indexOf('[');
-      const endIndex = aiResponse.lastIndexOf(']') + 1;
-      const jsonString = aiResponse.slice(startIndex, endIndex);
-      const questions = JSON.parse(jsonString);
-      return questions;
-    } catch (error) {
-      console.error("Error parsing AI response JSON: ", error);
-      return [];
-    }
-
-  } catch (err) {
-    console.error("Error fetching questions: ", err);
-    return [];
-  }
-}
 
 
 function startTimer(duration) {
