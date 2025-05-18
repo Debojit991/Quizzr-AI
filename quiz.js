@@ -303,8 +303,8 @@ function showStartModal(details) {
     `Category: ${details.category}<br>` +
     `Class: ${details.classLevel}<br>` +
     `Questions: ${details.questionsCount}<br>` +
-    `Time: ${details.time} minutes<br>` +
-    `<strong>📊 Current Difficulty: ${difficulty.toUpperCase()}</strong>`;
+    `Time: ${details.time} minutes<br>` ;
+
 
   modal.style.display = "flex";
 
